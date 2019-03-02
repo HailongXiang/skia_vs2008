@@ -11,8 +11,10 @@
 #define IDM_ABOUT				104
 #define IDM_EXIT				105
 #define IDI_SKIATEST			107
+#define IDI_TESTGAUSS			107
 #define IDI_SMALL				108
 #define IDC_SKIATEST			109
+#define IDC_TESTGAUSS			109
 #define IDC_MYICON				2
 #ifndef IDC_STATIC
 #define IDC_STATIC				-1
