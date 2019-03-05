@@ -7,7 +7,7 @@ class Plans
 {
 public:
 	Plans();
-	~Plans();
+	virtual ~Plans();
 
 	/*实时截图，高斯处理后设置为背景*/
 	static bool Gauss(const HWND m_hWnd, const HDC hdc, const POINT ptDest, const SIZE szLayered);

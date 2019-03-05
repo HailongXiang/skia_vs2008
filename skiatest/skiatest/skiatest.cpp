@@ -18,7 +18,7 @@ HBITMAP		g_hBmp;
 SkBitmap	g_skBitmap;
 int			g_nWidth;
 int			g_nHeight;
-int			plans = 3;							/*1~3 : 方案一~三		方案一要求屏幕无缩放*/
+int			plans = 1;							/*1~3 : 方案一~三		方案一要求屏幕无缩放*/
 // 此代码模块中包含的函数的前向声明:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE, int);
@@ -48,7 +48,6 @@ HBITMAP CreateGDIBitmap( int nWid,int nHei,void ** ppBits )
 
 int	doPrint(HDC hdc)
 {
-
 	DWORD dwExStyle = GetWindowLong(m_hWnd, GWL_EXSTYLE);
 	if((dwExStyle&WS_EX_LAYERED) != WS_EX_LAYERED)
 	{
@@ -96,7 +95,7 @@ int	doPrint(HDC hdc)
 			/*方案一：实时截图，高斯处理后设置为背景*/
 			if (Plans::Gauss(m_hWnd, hdc, ptDest, szLayered) && \
 				SkImageDecoder::DecodeFile("screen.bmp", &bmpPng))		//图片解码，数据存储在bmpPng中，成功返回true
-				canvas.drawBitmap(bmpPng, 0, 0, &paint);	//参数（图片大小，窗口x轴，y轴，画笔对象）
+				canvas.drawBitmap(bmpPng, 0, 0, &paint);
 			else
 				MessageBox(m_hWnd, _T("无法打开"), _T(""), MB_OK);
 		break;
@@ -216,12 +215,11 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
       return FALSE;
    }
    m_hWnd = hWnd;
-
+   SetWindowPos(m_hWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
    PAINTSTRUCT ps;
    HDC hdc;
 
-   //plans = 1;
    hdc = BeginPaint(hWnd, &ps);
    doPrint(hdc);
    EndPaint(hWnd, &ps);

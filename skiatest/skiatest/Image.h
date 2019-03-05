@@ -8,10 +8,13 @@ class Image
 {
 public:
 	Image();
-	~Image();
+	virtual ~Image();
 
-	static void Screen(HWND hWnd, POINT pos, SIZE rect);
-	static void *bmp32to24(char *fileName);
-	static void Bmp24ToBmp32(LPCTSTR lpSrcFileName, LPCTSTR lpDesFileName);
+	static bool Screen(const HWND hWnd, const POINT pos, const SIZE rect, const LPCWSTR filename);
+	static bool Bmp24ToBmp32(const LPCTSTR filename);
+
+private:
+	static bool Bmp32ToBmp24(const LPCTSTR filename);
+
 };
 

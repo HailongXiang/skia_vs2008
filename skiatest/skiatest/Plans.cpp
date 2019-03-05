@@ -11,7 +11,8 @@ bool Plans::Gauss(const HWND m_hWnd,const HDC hdc,const POINT ptDest,const SIZE 
 	RECT rcClient = { 0 };
 	::GetWindowRect(m_hWnd, &rcClient);
 
-	Image::Screen(m_hWnd, ptDest, szLayered);		//ΩÿÕº
+	if (!Image::Screen(m_hWnd, ptDest, szLayered, L"screen.bmp"))		//ΩÿÕº
+		return false;
 
 	HBITMAP g_hBmp = (HBITMAP)LoadImage(NULL, _T("screen.bmp"), IMAGE_BITMAP,
 		0, 0, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
@@ -33,7 +34,7 @@ bool Plans::Gauss(const HWND m_hWnd,const HDC hdc,const POINT ptDest,const SIZE 
 	image.Attach(g_hBmp);
 	image.Save(L"screen.bmp", Gdiplus::ImageFormatBMP);
 
-	//Image::Bmp24ToBmp32(L"screen.bmp", L"screen.bmp");
+	//Image::Bmp24ToBmp32(L"screen.bmp");
 
 	// «Â¿Ìƒ⁄¥Ê
 	SelectObject(bmp_dc, bmp_old);
@@ -55,7 +56,6 @@ LPCSTR GetUTF8String(LPCWSTR str)
 		::WideCharToMultiByte(CP_UTF8, 0, str, -1, pBuf, iLen, NULL, NULL);
 		return pBuf;
 	}
-
 	return NULL;
 }
 

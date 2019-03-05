@@ -19,7 +19,7 @@ class Gauss
 {
 public:
 	Gauss();
-	~Gauss();
+	virtual ~Gauss();
 
 	static bool GaussBlur(HBITMAP hBmp);
 

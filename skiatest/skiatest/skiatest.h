@@ -4,7 +4,6 @@
 #include "Image.h"
 #include "Gauss.h"
 #include "Plans.h"
-#include <dwmapi.h> 
 #include "windowsx.h"
 #include "core\SkBitmap.h"
 #include "core\SkDevice.h"
@@ -22,7 +21,6 @@
 #pragma comment(lib, "usp10.lib")
 #pragma comment(lib, "DelayImp.lib")
 #pragma comment(lib, "windowscodecs.lib")
-#pragma comment (lib , "dwmapi.lib" )
 
 #define MAX_LOADSTRING 256
 
