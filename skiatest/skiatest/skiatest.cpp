@@ -2,27 +2,10 @@
 //
 
 #include "stdafx.h"
-#include "windowsx.h"
+
 #include "skiatest.h"
 
-#include "core\SkBitmap.h"
-#include "core\SkDevice.h"
-#include "core\SkPaint.h"
-#include "core\SkRect.h"
-#include "core\SkTypeface.h"
-#include "core\SkScalar.h"
-#include "core\SkImageEncoder.h"
-#include "core\SkImageDecoder.h"
-#include "effects\SkBlurMaskFilter.h"
-#include "effects\SkBlurMask.h"
-#include "effects\SkDiscretePathEffect.h"
 
-#pragma comment(lib, "OpenGL32.lib")
-#pragma comment(lib, "usp10.lib")
-#pragma comment(lib, "DelayImp.lib")
-#pragma comment(lib, "windowscodecs.lib")
-
-#define MAX_LOADSTRING 256
 
 // 全局变量:
 HINSTANCE hInst;								// 当前实例
@@ -35,6 +18,7 @@ HBITMAP		g_hBmp;
 SkBitmap	g_skBitmap;
 int			g_nWidth;
 int			g_nHeight;
+int			plans = 3;							/*1~3 : 方案一~三		方案一要求屏幕无缩放*/
 // 此代码模块中包含的函数的前向声明:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE, int);
@@ -60,19 +44,7 @@ HBITMAP CreateGDIBitmap( int nWid,int nHei,void ** ppBits )
 	return hBmp;
 }
 
-LPCSTR GetUTF8String(LPCWSTR str)
-{
-	int iLen = ::WideCharToMultiByte(CP_UTF8, 0, str, -1, NULL, 0, NULL, NULL);
 
-	if (iLen > 1)
-	{ 
-		char *pBuf=new char[iLen];
-		::WideCharToMultiByte(CP_UTF8, 0, str, -1, pBuf, iLen, NULL, NULL);
-		return pBuf;
-	}
-
-	return NULL;
-}
 
 int	doPrint(HDC hdc)
 {
@@ -103,7 +75,7 @@ int	doPrint(HDC hdc)
 			g_hMemDc = NULL;
 		}
 
-		/*HBITMAP */g_hBmp= CreateGDIBitmap(g_nWidth, g_nHeight, &g_pBmpBits);
+		g_hBmp= CreateGDIBitmap(g_nWidth, g_nHeight, &g_pBmpBits);
 		g_hMemDc = CreateCompatibleDC(hdc);
 		SelectObject(g_hMemDc, g_hBmp);
 
@@ -114,105 +86,43 @@ int	doPrint(HDC hdc)
 	POINT ptDest = { rcClient.left, rcClient.top };
 	SIZE szLayered = { rcClient.right - rcClient.left, rcClient.bottom - rcClient.top };
 	
-	Image::Screen(m_hWnd,ptDest, szLayered);		//截图
-
-	g_hBmp = (HBITMAP)LoadImage(NULL, _T("screen.bmp"), IMAGE_BITMAP,
-		0, 0, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
-	if (!Gauss::GaussBlur(g_hBmp))
-	{
-		if (g_hBmp) DeleteObject(g_hBmp);
-		return 0;
-	}
-
-	// 内存DC
-	HDC mem_dc = CreateCompatibleDC(hdc);
-	HBITMAP mem_bmp = CreateCompatibleBitmap(hdc, rcClient.right, rcClient.bottom);
-	HGDIOBJ mem_old = SelectObject(mem_dc, mem_bmp);
-
-	// 位图DC
-	HDC bmp_dc = CreateCompatibleDC(mem_dc);
-	HGDIOBJ bmp_old = SelectObject(bmp_dc, g_hBmp);
-
-	CImage image;
-	image.Attach(g_hBmp);
-	image.Save(L"screen.bmp", Gdiplus::ImageFormatBMP);
-	Image::Bmp24ToBmp32(L"screen.bmp", L"screen.bmp");
-
-	// 清理内存
-	SelectObject(bmp_dc, bmp_old);
-	DeleteDC(bmp_dc);
-	SelectObject(mem_dc, mem_old);
-	DeleteObject(mem_bmp);
-	DeleteDC(mem_dc);
-	DeleteObject(g_hBmp);
-
-
 	SkPaint paint;
 	SkCanvas canvas(g_skBitmap);
 	SkBitmap bmpPng;
-	if(!SkImageDecoder::DecodeFile("screen.bmp", &bmpPng))		//图片解码，数据存储在bmpPng中，成功返回true
-		MessageBox(m_hWnd, _T("无法打开"), _T(""), MB_OK);
 	
-	paint.setAlpha(255);	//透明度	0全透明 ~ 255不透明
-	canvas.drawBitmap(bmpPng, 0, 0, &paint);	//参数（图片大小，窗口x轴，y轴，画笔对象）
-	
+	switch (plans)
+	{
+		case 1:
+			/*方案一：实时截图，高斯处理后设置为背景*/
+			if (Plans::Gauss(m_hWnd, hdc, ptDest, szLayered) && \
+				SkImageDecoder::DecodeFile("screen.bmp", &bmpPng))		//图片解码，数据存储在bmpPng中，成功返回true
+				canvas.drawBitmap(bmpPng, 0, 0, &paint);	//参数（图片大小，窗口x轴，y轴，画笔对象）
+			else
+				MessageBox(m_hWnd, _T("无法打开"), _T(""), MB_OK);
+		break;
+		case 2:
+			/*方案二：在画布上等间距绘透明度随机或者统一的点*/
+			Plans::DrawPoints(g_skBitmap);
+		break;
+		case 3:
+			/*方案三：使用透明模糊色块填充*/
+			Plans::ColorBk(g_skBitmap);
+		break;
+		default:
+			MessageBox(NULL, L"模式选择错误", L"提示", MB_OK);
+			exit(0);
+		break;
+	}
 
-	//::SetBkMode(g_hMemDc, TRANSPARENT);		//TRANSPARENT 设置成背景透明
-	//::SetTextColor(g_hMemDc, RGB(88,88,88));
+	/*::SetBkMode(g_hMemDc, TRANSPARENT);		//TRANSPARENT 设置成背景透明
+	::SetTextColor(g_hMemDc, RGB(88,88,88));
 
-	/*RECT rcDraw = {180,40, 320, 380};
+	RECT rcDraw = {180,40, 320, 380};
 	DrawText(g_hMemDc, _T("GDI绘制文字会穿透"), -1, &rcDraw, DT_WORDBREAK|DT_NOPREFIX);*/
 
-	//paint.setPathEffect(SkDiscretePathEffect::Create(1, 1));	//离散路径效应
-	
-	//paint.setMaskFilter(SkBlurMaskFilter::Create(SkBlurMaskFilter::kNormal_BlurStyle, SkBlurMask::ConvertRadiusToSigma(SkIntToScalar(10))));
-	////paint.setAlpha(0);
-	SkRect r;
-	paint.setARGB(150, 183, 183, 183);
-	r.set(0, 0, 500, 500);
-	canvas.drawRect(r, paint); 
-
-	//paint.setMaskFilter(SkBlurMaskFilter::Create( SkBlurMask::ConvertRadiusToSigma(SkIntToScalar(10)), SkBlurMaskFilter::kNormal_BlurStyle, SkBlurMaskFilter::kIgnoreTransform_BlurFlag));
-	//paint.setARGB(240, 183, 183, 183);
-	//r.offset(145, 0);
-	//canvas.drawRect(r, paint);
-
-	//paint.setMaskFilter(SkBlurMaskFilter::Create(SkBlurMaskFilter::kNormal_BlurStyle, SkBlurMask::ConvertRadiusToSigma(SkIntToScalar(10)), SkBlurMaskFilter::kAll_BlurFlag));
-	//paint.setARGB(240, 183, 183, 183);
-	//r.offset(145, 0);
-	//canvas.drawRect(r, paint);
-
-	/*LPCSTR strFont = GetUTF8String(L"微软雅黑");
-	SkTypeface *font = SkTypeface::CreateFromName(strFont, SkTypeface::kBold);
-	delete strFont;
-
-	LPCSTR strFont2 = GetUTF8String(L"宋体");
-	SkTypeface *font2 = SkTypeface::CreateFromName(strFont2, SkTypeface::kNormal);
-	delete strFont2;
-
-
-	if ( font && font2)
-	{
-		paint.setStyle(SkPaint::kStrokeAndFill_Style);
-		paint.setMaskFilter(SkBlurMaskFilter::Create(SkBlurMaskFilter::kSolid_BlurStyle,SkBlurMask::ConvertRadiusToSigma(SkIntToScalar(3))));
-		paint.setARGB(255, 255, 0, 0);
-		paint.setTextSize(24);
-		paint.setTextEncoding(SkPaint::kUTF16_TextEncoding); 
-		paint.setAntiAlias(true);
-		paint.setTypeface( font );
-		canvas.drawText(L"redrain微软雅黑", wcslen(L"redrain微软雅黑")*2, 180, 80, paint);
-		paint.setTypeface( font2 );
-		canvas.drawText(L"redrain宋体", wcslen(L"redrain宋体")*2, 180, 120, paint);
-	}
-*/
-	
-	//POINT ptDest = {rcClient.left, rcClient.top};
 	POINT ptSrc = {0, 0};
-	//SIZE szLayered = {rcClient.right - rcClient.left, rcClient.bottom - rcClient.top};
 	BLENDFUNCTION bf = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
 	::UpdateLayeredWindow(m_hWnd, hdc, &ptDest, &szLayered, g_hMemDc, &ptSrc, (COLORREF)0, &bf, ULW_ALPHA);
-	//SkImageEncoder::EncodeFile("out.png", g_skBitmap, SkImageEncoder::kPNG_Type, 80);
-	//DeleteBitmap(g_hBmp);
 	remove("screen.bmp");
 	return 0;
 }
@@ -311,6 +221,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    PAINTSTRUCT ps;
    HDC hdc;
 
+   //plans = 1;
    hdc = BeginPaint(hWnd, &ps);
    doPrint(hdc);
    EndPaint(hWnd, &ps);
@@ -424,23 +335,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			RECT rcClient;
 			::GetClientRect(m_hWnd, &rcClient);
 
-			hdc = BeginPaint(hWnd, &ps);
-			//test(hdc);
-			doPrint(hdc);
-			EndPaint(hWnd, &ps);
-			DeleteDC(hdc);
+			if (plans == 1)
+			{
+				hdc = BeginPaint(hWnd, &ps);
+				doPrint(hdc);
+				EndPaint(hWnd, &ps);
+				DeleteDC(hdc);
+			}
 
 			return HTCAPTION;
-			//return HTCLIENT;
 		}
-		break;/*
-	case WM_NCMOUSEMOVE:
-		{
-			hdc = BeginPaint(hWnd, &ps);
-			doPrint(hdc);
-			EndPaint(hWnd, &ps);
-		}
-		break;*/
+		break;
 	case WM_DESTROY:
 		{
 			if (g_hBmp != NULL) 

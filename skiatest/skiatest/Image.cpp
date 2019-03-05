@@ -10,6 +10,8 @@ void Image::Screen(HWND hWnd,POINT pos, SIZE rect)
 {
 	
 	HDC hdcSrc = GetDC(NULL);
+	/*int nScreenWidth = GetDeviceCaps(hdcSrc, HORZRES);
+	int scale = 1920 / nScreenWidth;*/
 	int nBitPerPixel = GetDeviceCaps(hdcSrc, BITSPIXEL);
 	int nWidth = rect.cx;
 	int nHeight = rect.cy;

@@ -74,6 +74,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -104,6 +105,7 @@
   <ItemGroup>
     <ClCompile Include="Gauss.cpp" />
     <ClCompile Include="Image.cpp" />
+    <ClCompile Include="Plans.cpp" />
     <ClCompile Include="skiatest.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -113,6 +115,7 @@
   <ItemGroup>
     <ClInclude Include="Gauss.h" />
     <ClInclude Include="Image.h" />
+    <ClInclude Include="Plans.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="skiatest.h" />
     <ClInclude Include="stdafx.h" />
